@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <link rel="stylesheet" type="text/css" href="css/styles.css" />
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <title>Prova</title>
+    </head>
+    <script type="text/javascript" charset="utf-8">
+        
+        // Wait for PhoneGap to load
+        //
+        document.addEventListener("deviceready", onDeviceReady, false);
+        
+        function controllo_primo_accesso(tx){
+            tx.executeSql('CREATE TABLE IF NOT EXISTS CONTROLLO (id unique, abilitato)');
+            tx.executeSql('SELECT * FROM CONTROLLO', [], querySuccess1, errorCB);
+        }
+    
+        // Query the success callback
+        //
+        function querySuccess1(tx, results) {
+            var len = results.rows.length;
+            
+            if(len==0){
+                console.log("caso 1");
+                var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+                db.transaction(populateDB, errorCB, successCB);
+                ////ENTRARE NELLA PAGINA DI INSERIMENTO CODICE E PROVA
+            }else{
+                console.log("caso 2");
+                var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+                db.transaction(queryDB, errorCB);
+                //Entra direttamente nell'applicazione
+            }
+        }
+        
+        // Populate the database
+        //
+        function populateDB(tx) {
+            //tx.executeSql('DROP TABLE IF EXISTS CONTROLLO');
+            //tx.executeSql('CREATE TABLE IF NOT EXISTS CONTROLLO (id unique, abilitato)');
+            tx.executeSql('INSERT INTO CONTROLLO (id, abilitato) VALUES (1, 0)');
+            tx.executeSql('CREATE TABLE IF NOT EXISTS CONTATORE (id unique, num_accessi)');
+            tx.executeSql('INSERT INTO CONTATORE (id, num_accessi) VALUES (1, 0)');
+           
+        }
+    
+    // Query the database
+    //
+    function queryDB(tx) {
+        tx.executeSql('SELECT * FROM CONTROLLO', [], querySuccess, errorCB);
+    }
+    
+    // Query the success callback
+    function querySuccess(tx, results) {
+        alert('0 NON Abilitato - 1 Abilitato: '+results.rows.item(0).abilitato);
+        //var len = results.rows.length;
+        //console.log("DEMO table: " + len + " rows found.");
+        //for (var i=0; i<len; i++){
+        //    console.log("Row = " + i + " ID = " + results.rows.item(i).id + " Data =  " + results.rows.item(i).abilitato);
+        if(results.rows.item(0).abilitato==1){
+            alert('Sei abilitato ad accedere alla versione Full');
+            //ENTRARE DIRETTAMENTE NELL'APP
+        }else{
+            //ENTRARE NELLA PAGINA DI INSERIMENTO CODICE E PROVA
+        }
+    }
+    
+    // Transaction error callback
+    //
+    function errorCB(err) {
+        console.log("Error processing SQL: "+err.code);
+    }
+    
+    // Transaction success callback
+    //
+    function successCB() {
+        //var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+        //db.transaction(queryDB, errorCB);
+    }
+    
+    // PhoneGap is ready
+    //
+    function onDeviceReady() {
+        var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+        db.transaction(controllo_primo_accesso, errorCB, successCB);
+    }
+    
+    function selectTry(){
+        
+        var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+        db.transaction(controllo_accessi_demo, errorCB, successCB);
+    }
+    
+    function controllo_accessi_demo(tx){
+        
+        tx.executeSql('SELECT * FROM CONTATORE', [], querySuccess2, errorCB);
+    }
+    
+    function querySuccess2(tx, results) {
+        alert(results.rows.item(0).num_accessi);
+        var numero_accessi=results.rows.item(0).num_accessi;
+        if(numero_accessi==5){
+        alert("Hai ragiunto il limite massimo di accessi per questa applicazione. contatta!!")
+        }else{
+            var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+            numero_accessi=numero_accessi+1;
+            db.transaction(function(tx) {
+                tx.executeSql('UPDATE CONTATORE SET num_accessi=' + numero_accessi + ' WHERE id=1', [], null, errorCB);
+            });
+            //ENTRI nell'applicazoner
+            
+        }
+    }
+    
+    
+    
+    function selectConvalida(){
+        var codice=document.getElementById('codice').value;
+        if(codice=='qwerty'){
+            var db = window.openDatabase("Database", "1.0", "PhoneGap Demo", 200000);
+            db.transaction(function(tx) {
+                tx.executeSql('UPDATE CONTROLLO SET abilitato=1 WHERE id=1', [], null, errorCB);
+            });
+        }
+    }
+    
+    
+        </script>
+    </head>
+    
+    <body>
+        <h1>Example</h1>
+        <p>Database</p>
+        <input type="text" name="codice" id="codice" ><input type="button" onClick="selectConvalida()" VALUE="Convalida codice"> <br><br><br>
+        <input type="button" onClick="selectTry()" VALUE="DEMO">
+        
+    </body>
+</html>
